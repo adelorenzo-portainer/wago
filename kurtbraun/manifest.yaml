@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: wago-nodered
+  labels:
+    app: nodered
+spec:
+  selector:
+    matchLabels:
+      noderuns: edge-production
+  updateStrategy:
+    type: OnDelete
+  template:
+    metadata:
+      labels:
+        app: nodered
+        noderuns: edge-production
+    spec:
+      hostNetwork: true
+      containers:
+        - name: nodered
+          image: nodered/node-red
+          ports:
+            - containerPort: 1880
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: role
+                    operator: In
+                    values:
+                      - production
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - web
+                topologyKey: kubernetes.io/hostname
